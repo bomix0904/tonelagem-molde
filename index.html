@@ -8,7 +8,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: coluna de entradas à esquerda, resultado e lista de máquinas à direita; empilha no celular. */
+/* Layout: coluna de entradas à esquerda, resultado e máquinas à direita; empilha no celular. */
 :root {
   --bg: #eceff1;
   --surface: #fafbfb;
@@ -54,7 +54,7 @@ body {
 }
 .wrap { max-width: 1040px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
 header h1 { font-family: var(--f-display); font-weight: 700; font-size: 2.2rem; line-height: 1.05; margin: 0; letter-spacing: .01em; text-wrap: balance; }
-header p { margin: 6px 0 0; color: var(--muted); max-width: 60ch; }
+header p { margin: 6px 0 0; color: var(--muted); max-width: 62ch; }
 .layout { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 24px; align-items: start; }
 @media (max-width: 780px) { .layout { grid-template-columns: minmax(0, 1fr); } }
 .col { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
@@ -69,6 +69,18 @@ label, .lbl { font-size: .85rem; font-weight: 500; }
 .ctl input, .ctl select { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--fg); font: 500 1rem var(--f-mono); padding: 9px 10px; outline: none; }
 .ctl select { font-family: var(--f-body); }
 .ctl .unit { display: flex; align-items: center; padding: 0 10px; color: var(--muted); font: .82rem var(--f-mono); border-left: 1px solid var(--line); }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pair .field { margin-bottom: 0; }
+.seg { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; background: var(--bg); }
+.seg button { border: 0; background: transparent; color: var(--muted); font: 500 .9rem var(--f-body); padding: 9px 10px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--surface); }
+.seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.badge { display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; font-weight: 600; letter-spacing: .03em; padding: 3px 9px; border-radius: 999px; border: 1px solid transparent; width: fit-content; }
+.badge.ok { background: var(--ok-soft); color: var(--ok); border-color: var(--ok); }
+.badge.warn { background: var(--warn-soft); color: var(--warn); border-color: var(--warn); }
+.badge.bad { background: var(--bad-soft); color: var(--bad); border-color: var(--bad); }
+.badge.idle { background: var(--idle-soft); color: var(--idle); border-color: var(--line); }
 details { border-top: 1px solid var(--line); margin-top: 16px; padding-top: 12px; }
 summary { cursor: pointer; font-size: .85rem; font-weight: 500; color: var(--accent); }
 summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -78,8 +90,12 @@ details .field:first-of-type { margin-top: 12px; }
 .big { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .big .num { font-family: var(--f-display); font-weight: 700; font-size: 4.2rem; line-height: .95; color: var(--accent); font-variant-numeric: tabular-nums; }
 .big .alt { font-family: var(--f-mono); color: var(--muted); font-size: .95rem; }
+.range { font-size: .85rem; color: var(--muted); margin-top: 4px; }
+.range b { font-family: var(--f-mono); font-weight: 500; color: var(--fg); }
 .facts { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .82rem; color: var(--muted); }
 .facts b { font-family: var(--f-mono); font-weight: 500; color: var(--fg); }
+.alert { border-radius: 4px; padding: 10px 12px; font-size: .85rem; font-weight: 500; background: var(--warn-soft); color: var(--warn); border: 1px solid var(--warn); }
+.alert.bad { background: var(--bad-soft); color: var(--bad); border-color: var(--bad); }
 .verdict { border-top: 1px solid var(--line); padding-top: 14px; display: flex; flex-direction: column; gap: 10px; }
 .verdict .q { font-weight: 600; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -89,11 +105,12 @@ details .field:first-of-type { margin-top: 12px; }
 .chip.idle { background: var(--idle-soft); color: var(--idle); border-color: var(--line); }
 .none { background: var(--bad-soft); color: var(--bad); border: 1px solid var(--bad); border-radius: 4px; padding: 10px 12px; font-weight: 500; }
 .rows { display: flex; flex-direction: column; }
-.row { display: grid; grid-template-columns: 4.2rem minmax(0, 1fr) 11.5rem; align-items: center; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); }
+.row { display: grid; grid-template-columns: 4.2rem minmax(0, 1fr) 13rem; align-items: center; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); }
 .row:first-child { border-top: 0; }
 .row .m { font-family: var(--f-display); font-weight: 700; font-size: 1.4rem; line-height: 1; font-variant-numeric: tabular-nums; }
 .track { position: relative; height: 10px; background: var(--idle-soft); border-radius: 2px; overflow: hidden; }
 .track i { position: absolute; inset: 0 auto 0 0; display: block; border-radius: 2px; }
+.track .hi { position: absolute; inset: 0 auto 0 0; display: block; opacity: .28; }
 .track .mark { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--fg); opacity: .35; }
 .row .st { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: .82rem; }
 .row .st span:first-child { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
@@ -106,18 +123,29 @@ details .field:first-of-type { margin-top: 12px; }
   .big .num { font-size: 3.4rem; }
 }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .78rem; color: var(--muted); margin-top: 12px; }
-.formula { font-family: var(--f-mono); font-size: .85rem; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 10px 12px; overflow-x: auto; white-space: nowrap; }
-.alert { border-radius: 4px; padding: 10px 12px; font-size: .85rem; font-weight: 500; background: var(--warn-soft); color: var(--warn); border: 1px solid var(--warn); }
-.alert.bad { background: var(--bad-soft); color: var(--bad); border-color: var(--bad); }
+.btn { font: 600 .85rem var(--f-body); border: 1px solid var(--accent); color: var(--accent); background: transparent; border-radius: 4px; padding: 8px 14px; cursor: pointer; }
+.btn:hover { background: var(--accent-soft); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn.ghost { border-color: var(--line); color: var(--muted); padding: 4px 10px; font-weight: 500; }
+.toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.toolbar p { margin: 0; font-size: .85rem; color: var(--muted); max-width: 52ch; }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .85rem; min-width: 520px; }
+th, td { text-align: right; padding: 8px 6px; border-top: 1px solid var(--line); white-space: nowrap; }
+th { font-weight: 600; color: var(--muted); font-size: .74rem; letter-spacing: .05em; text-transform: uppercase; border-top: 0; }
+th:first-child, td:first-child { text-align: left; }
+td { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+td:first-child { font-family: var(--f-display); font-weight: 700; font-size: 1.1rem; }
+td.strong { color: var(--accent); font-weight: 500; }
+.formula { font-family: var(--f-mono); font-size: .85rem; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 10px 12px; overflow-x: auto; white-space: nowrap; line-height: 1.7; }
 .notes { margin: 12px 0 0; padding-left: 1.1rem; color: var(--muted); font-size: .85rem; display: flex; flex-direction: column; gap: 4px; }
 </style>
-
 </head>
 <body>
 <div class="wrap">
   <header>
     <h1>Cálculo de Força de Fechamento</h1>
-    <p>Informe cavidades, área projetada e material. A página calcula a força de fechamento e mostra em quais injetoras o molde pode ser instalado.</p>
+    <p>Informe a peça e o material. A página calcula a pressão, a força de fechamento e mostra em quais injetoras o molde pode ser instalado.</p>
   </header>
 
   <div class="layout">
@@ -125,33 +153,52 @@ details .field:first-of-type { margin-top: 12px; }
       <section class="panel" aria-labelledby="h-molde">
         <h2 id="h-molde">Molde</h2>
         <div class="field">
-          <label for="cav">Número de cavidades</label>
-          <div class="ctl"><input id="cav" type="number" inputmode="numeric" min="1" max="256" step="1" value="4"><span class="unit">cav.</span></div>
+          <span class="lbl" id="l-tipo">Tipo de molde</span>
+          <div class="seg" role="group" aria-labelledby="l-tipo">
+            <button type="button" id="tipoSimples" aria-pressed="true">Simples</button>
+            <button type="button" id="tipoStack" aria-pressed="false">Empilhado</button>
+          </div>
+          <span class="hint" id="tipoHint"></span>
         </div>
-        <div class="field">
-          <label for="area">Área projetada por cavidade</label>
-          <div class="ctl"><input id="area" type="number" inputmode="decimal" min="0" step="0.1" value="85"><span class="unit">cm²</span></div>
-          <span class="hint">Área da peça vista na direção de abertura do molde.</span>
+        <div class="pair" style="margin-bottom:14px">
+          <div class="field">
+            <label for="cav">Cavidades</label>
+            <div class="ctl"><input id="cav" type="number" inputmode="numeric" min="1" max="256" step="1" value="4"><span class="unit">cav.</span></div>
+          </div>
+          <div class="field">
+            <label for="area">Área projetada</label>
+            <div class="ctl"><input id="area" type="number" inputmode="decimal" min="0" step="0.1" value="85"><span class="unit">cm²</span></div>
+          </div>
         </div>
+        <span class="hint" style="display:block;margin:-6px 0 14px">Área projetada por cavidade, vista na direção de abertura do molde.</span>
         <div class="field">
           <label for="mat">Material</label>
           <div class="ctl"><select id="mat"></select></div>
         </div>
         <div class="field">
-          <label for="flow">Comprimento de fluxo</label>
-          <div class="ctl"><input id="flow" type="number" inputmode="decimal" min="0" step="1" value="0"><span class="unit">mm</span></div>
-          <span class="hint">Do ponto de injeção até o ponto mais distante da peça. Deixe 0 para ignorar.</span>
+          <label for="mfi">Fluidez (MFI)</label>
+          <div class="ctl"><input id="mfi" type="number" inputmode="decimal" min="0" step="1" value="20"><span class="unit">g/10 min</span></div>
+          <span class="hint" id="mfiHint"></span>
         </div>
-        <div class="field">
-          <label for="thick">Espessura nominal da parede</label>
-          <div class="ctl"><input id="thick" type="number" inputmode="decimal" min="0" step="0.1" value="0"><span class="unit">mm</span></div>
-          <span class="hint" id="ltHint">Informe comprimento e espessura para corrigir a pressão pela razão L/t.</span>
+        <div class="pair" style="margin-bottom:10px">
+          <div class="field">
+            <label for="flow">Comp. de fluxo</label>
+            <div class="ctl"><input id="flow" type="number" inputmode="decimal" min="0" step="1" value="0"><span class="unit">mm</span></div>
+          </div>
+          <div class="field">
+            <label for="thick">Espessura</label>
+            <div class="ctl"><input id="thick" type="number" inputmode="decimal" min="0" step="0.1" value="0"><span class="unit">mm</span></div>
+          </div>
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <span class="hint">Fluxo: do ponto de injeção ao ponto mais distante. Espessura: parede nominal.</span>
+          <div id="wall"></div>
         </div>
         <details>
           <summary>Ajustes</summary>
           <div class="field">
-            <label for="press">Pressão de cavitação</label>
-            <div class="ctl"><input id="press" type="number" inputmode="decimal" min="1" step="10" value="450"><span class="unit">bar</span></div>
+            <label for="press">Pressão de injeção manual</label>
+            <div class="ctl"><input id="press" type="number" inputmode="decimal" min="1" step="10" placeholder="automática"><span class="unit">kgf/cm²</span></div>
             <span class="hint" id="pressHint"></span>
           </div>
           <div class="field">
@@ -182,9 +229,10 @@ details .field:first-of-type { margin-top: 12px; }
         <div>
           <div class="eyebrow">Força de fechamento necessária</div>
           <div class="big"><span class="num" id="outT">0</span><span class="alt" id="outKn"></span></div>
+          <div class="range" id="range"></div>
         </div>
         <div class="facts" id="facts"></div>
-        <div id="ltAlert"></div>
+        <div id="alerts" style="display:flex;flex-direction:column;gap:8px"></div>
         <div class="verdict" id="verdict"></div>
       </section>
 
@@ -193,20 +241,31 @@ details .field:first-of-type { margin-top: 12px; }
         <div class="rows" id="rows"></div>
         <div class="legend">
           <span><b class="s-ok">Indicada</b> 50% a 90%</span>
-          <span><b class="s-warn">No limite</b> 90% a 100%</span>
+          <span><b class="s-warn">No limite</b> acima de 90% ou faixa estimada passa de 100%</span>
           <span><b class="s-idle">Sobredimensionada</b> abaixo de 50%</span>
           <span><b class="s-bad">Insuficiente</b> acima de 100%</span>
         </div>
       </section>
 
+      <section class="panel" aria-labelledby="h-comp">
+        <h2 id="h-comp">Comparar cenários</h2>
+        <div class="toolbar">
+          <p>Fixe o cálculo atual, mude os dados (cavidades, espessura, tipo de molde...) e fixe de novo para comparar lado a lado.</p>
+          <button type="button" class="btn" id="pin">Fixar cenário</button>
+        </div>
+        <div class="tablewrap" id="compWrap"></div>
+      </section>
+
       <section class="panel" aria-labelledby="h-calc">
         <h2 id="h-calc">Como é calculado</h2>
-        <div class="formula">F = (cavidades × A_cav + A_canal) × P × (1 + folga)<br>P = P_material × fator(L/t)</div>
+        <div class="formula">F = (cav_ef × A_cav + A_canal) × p / 1000 × (1 + folga) × K<br>p = p_material × fator(L/s) × fator(MFI)<br>L/s = comprimento de fluxo ÷ espessura</div>
         <ul class="notes">
-          <li>A em cm², P em bar convertida para kgf/cm² (1 bar = 1,0197 kgf/cm²), F em toneladas-força (T).</li>
-          <li>As pressões por material são valores típicos de projeto, para L/t em torno de 100. O fator de correção por L/t (comprimento de fluxo ÷ espessura) é uma estimativa empírica a calibrar com moldes reais: L/t 50 = 0,85, 100 = 1,00, 150 = 1,15, 200 = 1,35, 250 = 1,60, 300 ou mais = 1,90, com interpolação entre os pontos.</li>
+          <li>A em cm², p em kgf/cm², F em toneladas-força (T). Molde simples: cav_ef = cavidades e K = 1. Molde empilhado: cav_ef = cavidades ÷ 2 e K = 1,15.</li>
+          <li>Tipo de parede pelo L/s: normal abaixo de 150, fina de 150 a 250, extra fina acima de 250.</li>
+          <li>As pressões por material são valores típicos de projeto, para L/s em torno de 100 e MFI típico. O fator de L/s (50 = 0,85, 100 = 1,00, 150 = 1,15, 200 = 1,35, 250 = 1,60, 300 ou mais = 1,90) e o efeito do MFI (maior fluidez, menor pressão) são estimativas empíricas a calibrar com moldes reais.</li>
+          <li>O MFI vem preenchido com um valor típico do material. Use o da ficha técnica da classe que será injetada, na mesma condição de ensaio da sua planilha.</li>
+          <li>A faixa mostrada considera ±15% sobre a pressão estimada. Se você já conhece a pressão do molde, digite em Ajustes: o valor manual substitui o cálculo.</li>
           <li>Com mais de um ponto de injeção, use o maior caminho de fluxo de um ponto até o fim da região que ele alimenta.</li>
-          <li>Se você editar a pressão em Ajustes, o valor manual vale até trocar o material, o comprimento ou a espessura.</li>
           <li>O cálculo considera só a força de fechamento. Confira também distância entre colunas, curso de abertura, altura do molde e capacidade de injeção.</li>
         </ul>
       </section>
@@ -216,28 +275,50 @@ details .field:first-of-type { margin-top: 12px; }
 
 <script>
 (function () {
+  // [nome, pressão típica kgf/cm², MFI típico, MFI mínimo usual, MFI máximo usual]
+  // Valores aproximados para classes de injeção; use a ficha técnica da classe real.
   var MATERIALS = [
-    ["PE-BD (LDPE)", 250], ["PE-AD (HDPE)", 300], ["PP", 350], ["PS cristal", 350],
-    ["PS alto impacto", 350], ["TPU / TPE", 400], ["SAN", 400], ["ABS", 450], ["PET", 450],
-    ["PVC rígido", 450], ["PBT", 450], ["PA 6 / PA 66", 500], ["POM", 500], ["PMMA", 550],
-    ["PC/ABS", 550], ["PC", 600], ["PA com fibra de vidro", 600]
+    ["PE-BD (LDPE)", 255, 20, 5, 70],
+    ["PE-AD (HDPE)", 305, 8, 2, 30],
+    ["PP", 355, 25, 5, 80],
+    ["PS cristal", 355, 10, 2, 30],
+    ["PS alto impacto", 355, 8, 2, 25],
+    ["TPU / TPE", 410, 20, 5, 60],
+    ["SAN", 410, 15, 5, 40],
+    ["ABS", 460, 20, 5, 50],
+    ["PET", 460, 20, 5, 60],
+    ["PVC rígido", 460, 10, 2, 40],
+    ["PBT", 460, 20, 8, 45],
+    ["PA 6 / PA 66", 510, 30, 10, 80],
+    ["POM", 510, 9, 2, 50],
+    ["PMMA", 560, 5, 1, 25],
+    ["PC/ABS", 560, 15, 5, 40],
+    ["PC", 610, 10, 4, 30],
+    ["PA com fibra de vidro", 610, 15, 5, 40]
   ];
-  var DEFAULT_MACHINES = "80, 120, 150, 180, 220, 350, 450, 550";
-  var BAR_TO_KGF = 1.01972, TF_TO_KN = 9.80665;
+  var LT_CURVE = [[50, 0.85], [100, 1.0], [150, 1.15], [200, 1.35], [250, 1.6], [300, 1.9]];
+  var STACK_K = 1.15, SPREAD = 0.15, TF_TO_KN = 9.80665, MAX_PINS = 5;
 
   var $ = function (id) { return document.getElementById(id); };
-  var el = {
-    cav: $("cav"), area: $("area"), mat: $("mat"), press: $("press"), runner: $("runner"),
-    margin: $("margin"), machines: $("machines"), outT: $("outT"), outKn: $("outKn"),
-    facts: $("facts"), verdict: $("verdict"), rows: $("rows"), pressHint: $("pressHint"),
-    flow: $("flow"), thick: $("thick"), ltHint: $("ltHint"), ltAlert: $("ltAlert")
-  };
+  var el = {};
+  ["cav","area","mat","mfi","flow","thick","press","runner","margin","machines","outT","outKn","range","facts",
+   "alerts","verdict","rows","pressHint","mfiHint","wall","tipoSimples","tipoStack","tipoHint","pin","compWrap"
+  ].forEach(function (id) { el[id] = $(id); });
 
-  // Fator de correção da pressão por razão L/t (estimativa empírica, a calibrar).
-  var LT_CURVE = [[50, 0.85], [100, 1.0], [150, 1.15], [200, 1.35], [250, 1.6], [300, 1.9]];
+  var stack = false, pins = [], last = null;
+
+  function fmt(v, d) {
+    return v.toLocaleString("pt-BR", { minimumFractionDigits: d, maximumFractionDigits: d });
+  }
+  function num(input) {
+    var v = parseFloat(String(input.value).replace(",", "."));
+    return isFinite(v) ? v : 0;
+  }
+  function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
+
   function ltFactor(lt) {
-    if (!(lt > 0)) return 1;
     var c = LT_CURVE;
+    if (!(lt > 0)) return 1;
     if (lt <= c[0][0]) return c[0][1];
     if (lt >= c[c.length - 1][0]) return c[c.length - 1][1];
     for (var i = 1; i < c.length; i++) {
@@ -248,34 +329,36 @@ details .field:first-of-type { margin-top: 12px; }
     }
     return 1;
   }
-  var manualPress = false;
-  function autoPress() {
-    var lt = ltValue();
-    el.press.value = Math.round(MATERIALS[+el.mat.value][1] * ltFactor(lt));
+  function mfiFactor(mfi, ref) {
+    if (!(mfi > 0)) return 1;
+    return clamp(Math.pow(ref / mfi, 0.2), 0.8, 1.3);
   }
-  function ltValue() {
-    var f = num(el.flow), t = num(el.thick);
-    return f > 0 && t > 0 ? f / t : 0;
+  function wallClass(lt) {
+    if (!(lt > 0)) return null;
+    if (lt > 250) return { k: "bad", t: "Parede extra fina" };
+    if (lt >= 150) return { k: "warn", t: "Parede fina" };
+    return { k: "ok", t: "Parede normal" };
   }
-
-  function fmt(v, d) {
-    return v.toLocaleString("pt-BR", { minimumFractionDigits: d, maximumFractionDigits: d });
-  }
-  function num(input) {
-    var v = parseFloat(String(input.value).replace(",", "."));
-    return isFinite(v) ? v : 0;
+  function status(util, high) {
+    if (util > 1) return { k: "bad", t: "Insuficiente" };
+    if (util > 0.9 || high > 1) return { k: "warn", t: "No limite" };
+    if (util >= 0.5) return { k: "ok", t: "Indicada" };
+    return { k: "idle", t: "Sobredimensionada" };
   }
 
   MATERIALS.forEach(function (m, i) {
     var o = document.createElement("option");
-    o.value = i; o.textContent = m[0] + " (" + m[1] + " bar)";
+    o.value = i; o.textContent = m[0] + " (" + m[1] + " kgf/cm²)";
     el.mat.appendChild(o);
   });
   el.mat.value = "7"; // ABS
+  el.mfi.value = MATERIALS[7][2];
 
   try {
     var saved = localStorage.getItem("tonelagem.machines");
     if (saved) el.machines.value = saved;
+    var sp = localStorage.getItem("tonelagem.cenarios");
+    if (sp) { var arr = JSON.parse(sp); if (Array.isArray(arr)) pins = arr.slice(0, MAX_PINS); }
   } catch (e) {}
 
   function parseMachines() {
@@ -287,94 +370,156 @@ details .field:first-of-type { margin-top: 12px; }
     return list.sort(function (a, b) { return a - b; });
   }
 
-  function status(util) {
-    if (util > 1) return { k: "bad", t: "Insuficiente" };
-    if (util > 0.9) return { k: "warn", t: "No limite" };
-    if (util >= 0.5) return { k: "ok", t: "Indicada" };
-    return { k: "idle", t: "Sobredimensionada" };
-  }
-
-  function update() {
+  function calc() {
     var n = Math.max(0, Math.round(num(el.cav)));
     var a = Math.max(0, num(el.area));
     var runner = Math.max(0, num(el.runner));
-    var p = Math.max(0, num(el.press));
     var margin = Math.max(0, num(el.margin)) / 100;
     var mat = MATERIALS[+el.mat.value];
+    var mfi = Math.max(0, num(el.mfi));
+    var flow = Math.max(0, num(el.flow)), thick = Math.max(0, num(el.thick));
+    var lt = flow > 0 && thick > 0 ? flow / thick : 0;
+    var fL = ltFactor(lt), fM = mfiFactor(mfi, mat[2]);
+    var pAuto = mat[1] * fL * fM;
+    var manual = Math.max(0, num(el.press));
+    var p = manual > 0 ? manual : pAuto;
+    var nEf = stack ? n / 2 : n;
+    var K = stack ? STACK_K : 1;
+    var areaTotal = nEf * a + runner;
+    var base = areaTotal * p / 1000;
+    var need = base * (1 + margin) * K;
+    return {
+      n: n, a: a, runner: runner, margin: margin, mat: mat, mfi: mfi, lt: lt, fL: fL, fM: fM,
+      pAuto: pAuto, manual: manual > 0, p: p, nEf: nEf, K: K, areaTotal: areaTotal, base: base,
+      need: need, low: need * (1 - SPREAD), high: need * (1 + SPREAD)
+    };
+  }
 
-    var areaTotal = n * a + runner;
-    var base = areaTotal * p * BAR_TO_KGF / 1000;
-    var need = base * (1 + margin);
+  function update() {
+    var r = calc();
+    last = r;
 
-    el.outT.textContent = fmt(need, 1) + " T";
-    el.outKn.textContent = fmt(need * TF_TO_KN, 0) + " kN";
+    el.tipoSimples.setAttribute("aria-pressed", String(!stack));
+    el.tipoStack.setAttribute("aria-pressed", String(stack));
+    el.tipoHint.textContent = stack
+      ? "Empilhado: conta metade das cavidades e acrescenta 15%."
+      : "Simples: conta todas as cavidades.";
 
-    var lt = ltValue(), fac = ltFactor(lt);
-    el.pressHint.textContent = "Típica para " + mat[0] + ": " + mat[1] + " bar" +
-      (lt > 0 ? ", × " + fmt(fac, 2) + " por L/t = " + fmt(lt, 0) + " → " + fmt(mat[1] * fac, 0) + " bar" : "") +
-      (manualPress ? ". Valor atual ajustado manualmente." : ".");
-    el.ltHint.textContent = lt > 0
-      ? "L/t = " + fmt(lt, 0) + " (fator de pressão × " + fmt(fac, 2) + ")."
-      : "Informe comprimento e espessura para corrigir a pressão pela razão L/t.";
-    var alertHtml = "";
-    if (lt > 250) {
-      alertHtml = '<div class="alert bad">L/t = ' + fmt(lt, 0) + ': enchimento muito difícil. Considere mais pontos de injeção, parede mais espessa ou material de maior fluidez.</div>';
-    } else if (lt > 150) {
-      alertHtml = '<div class="alert">L/t = ' + fmt(lt, 0) + ': fluxo longo. Verifique se o enchimento fecha e avalie mais pontos de injeção.</div>';
+    el.outT.textContent = fmt(r.need, 1) + " T";
+    el.outKn.textContent = fmt(r.need * TF_TO_KN, 0) + " kN";
+    el.range.innerHTML = r.need > 0
+      ? "Faixa estimada: <b>" + fmt(r.low, 0) + " a " + fmt(r.high, 0) + " T</b>"
+      : "";
+
+    var mat = r.mat;
+    el.mfiHint.textContent = "Típico para " + mat[0] + ": " + mat[2] + " (faixa usual " + mat[3] + " a " + mat[4] + ").";
+    el.pressHint.textContent = "Automática: " + fmt(r.pAuto, 0) + " kgf/cm²" +
+      (r.lt > 0 ? " (base " + mat[1] + " × " + fmt(r.fL, 2) + " por L/s × " + fmt(r.fM, 2) + " por MFI)" : " (base " + mat[1] + " × " + fmt(r.fM, 2) + " por MFI)") +
+      (r.manual ? ". Usando o valor manual." : ".");
+
+    var w = wallClass(r.lt);
+    el.wall.innerHTML = w
+      ? '<span class="badge ' + w.k + '">' + w.t + " · L/s " + fmt(r.lt, 0) + "</span>"
+      : '<span class="hint">Informe fluxo e espessura para ver o L/s e o tipo de parede.</span>';
+
+    var alerts = "";
+    if (r.lt > 250) {
+      alerts += '<div class="alert bad">L/s = ' + fmt(r.lt, 0) + ': parede extra fina, enchimento muito difícil. Considere mais pontos de injeção, parede mais espessa ou material de maior fluidez.</div>';
+    } else if (r.lt >= 150) {
+      alerts += '<div class="alert">L/s = ' + fmt(r.lt, 0) + ': parede fina. Verifique se o enchimento fecha e avalie mais pontos de injeção.</div>';
     }
-    el.ltAlert.innerHTML = alertHtml;
+    if (r.mfi > 0 && (r.mfi < mat[3] || r.mfi > mat[4])) {
+      alerts += '<div class="alert">MFI ' + fmt(r.mfi, 0) + ' está fora da faixa usual de ' + mat[0] + ' (' + mat[3] + ' a ' + mat[4] + '). Confira a ficha técnica e a condição de ensaio.</div>';
+    }
+    el.alerts.innerHTML = alerts;
+
     el.facts.innerHTML =
-      "<span>Área total <b>" + fmt(areaTotal, 1) + " cm²</b></span>" +
-      (lt > 0 ? "<span>L/t <b>" + fmt(lt, 0) + "</b></span>" : "") +
-      "<span>Pressão <b>" + fmt(p, 0) + " bar</b></span>" +
-      "<span>Sem folga <b>" + fmt(base, 1) + " T</b></span>" +
-      "<span>Folga <b>" + fmt(margin * 100, 0) + "%</b></span>";
+      "<span>Pressão <b>" + fmt(r.p, 0) + " kgf/cm²</b>" + (r.manual ? " (manual)" : "") + "</span>" +
+      "<span>Área total <b>" + fmt(r.areaTotal, 1) + " cm²</b></span>" +
+      (stack ? "<span>Cav. consideradas <b>" + fmt(r.nEf, 1) + "</b></span>" : "") +
+      "<span>Sem folga <b>" + fmt(r.base, 1) + " T</b></span>" +
+      "<span>Folga <b>" + fmt(r.margin * 100, 0) + "%</b></span>" +
+      (stack ? "<span>Empilhado <b>+15%</b></span>" : "");
 
     var machines = parseMachines();
-    var fits = machines.filter(function (m) { return need <= m; });
+    var fits = machines.filter(function (m) { return r.need <= m; });
 
     var html = "";
-    if (need <= 0) {
+    if (r.need <= 0) {
       html = '<div class="q">Informe cavidades e área projetada para calcular.</div>';
     } else if (!machines.length) {
       html = '<div class="q">Adicione ao menos uma máquina à lista.</div>';
     } else if (!fits.length) {
-      html = '<div class="none">Nenhuma máquina da lista comporta este molde. É preciso uma injetora de pelo menos ' + fmt(need, 0) + ' T.</div>';
+      html = '<div class="none">Nenhuma máquina da lista comporta este molde. É preciso uma injetora de pelo menos ' + fmt(r.need, 0) + ' T.</div>';
     } else {
       html = '<div class="q">Este molde pode ser colocado em:</div><div class="chips">' +
         fits.map(function (m) {
-          return '<span class="chip ' + status(need / m).k + '">' + fmt(m, m % 1 ? 1 : 0) + " T</span>";
+          return '<span class="chip ' + status(r.need / m, r.high / m).k + '">' + fmt(m, m % 1 ? 1 : 0) + " T</span>";
         }).join("") + "</div>";
     }
     el.verdict.innerHTML = html;
 
-    el.rows.innerHTML = need > 0 ? machines.map(function (m) {
-      var u = need / m, s = status(u);
+    el.rows.innerHTML = r.need > 0 ? machines.map(function (m) {
+      var u = r.need / m, h = r.high / m, s = status(u, h);
       return '<div class="row"><span class="m">' + fmt(m, m % 1 ? 1 : 0) + ' T</span>' +
-        '<div class="track" role="img" aria-label="Ocupação de ' + fmt(u * 100, 0) + '%">' +
+        '<div class="track" role="img" aria-label="Ocupação de ' + fmt(u * 100, 0) + '%, até ' + fmt(h * 100, 0) + '% na pior hipótese">' +
+        '<span class="hi f-' + s.k + '" style="width:' + Math.min(h, 1) * 100 + '%"></span>' +
         '<i class="f-' + s.k + '" style="width:' + Math.min(u, 1) * 100 + '%"></i>' +
         '<span class="mark" style="left:90%"></span></div>' +
-        '<div class="st"><span>' + fmt(u * 100, 0) + '%</span><span class="tag s-' + s.k + '">' + s.t + '</span></div></div>';
+        '<div class="st"><span>' + fmt(u * 100, 0) + '% <small style="color:var(--muted)">(até ' + fmt(h * 100, 0) + '%)</small></span><span class="tag s-' + s.k + '">' + s.t + '</span></div></div>';
     }).join("") : "";
+
+    renderPins();
   }
 
+  function smallest(need) {
+    var ms = parseMachines().filter(function (m) { return need <= m; });
+    return ms.length ? ms[0] : null;
+  }
+
+  function renderPins() {
+    if (!pins.length) {
+      el.compWrap.innerHTML = '<p class="hint" style="margin:0">Nenhum cenário fixado ainda.</p>';
+      return;
+    }
+    var head = "<tr><th>#</th><th>Tipo</th><th>Mat.</th><th>Cav.</th><th>Área</th><th>L/s</th><th>MFI</th><th>Pressão</th><th>Força</th><th>Menor máq.</th><th></th></tr>";
+    var body = pins.map(function (c, i) {
+      var sm = smallest(c.need);
+      return "<tr><td>" + (i + 1) + "</td><td>" + (c.stack ? "Empilh." : "Simples") + "</td><td>" + c.mat + "</td><td>" + c.n +
+        "</td><td>" + fmt(c.a, 0) + "</td><td>" + (c.lt > 0 ? fmt(c.lt, 0) : "-") + "</td><td>" + fmt(c.mfi, 0) +
+        "</td><td>" + fmt(c.p, 0) + "</td><td class=\"strong\">" + fmt(c.need, 0) + " T</td><td>" + (sm ? fmt(sm, 0) + " T" : "nenhuma") +
+        '</td><td><button type="button" class="btn ghost" data-del="' + i + '" aria-label="Remover cenário ' + (i + 1) + '">Remover</button></td></tr>';
+    }).join("");
+    el.compWrap.innerHTML = "<table><thead>" + head + "</thead><tbody>" + body + "</tbody></table>";
+  }
+
+  function savePins() {
+    try { localStorage.setItem("tonelagem.cenarios", JSON.stringify(pins)); } catch (e) {}
+  }
+
+  el.pin.addEventListener("click", function () {
+    if (!last || last.need <= 0) return;
+    if (pins.length >= MAX_PINS) pins.shift();
+    pins.push({ stack: stack, mat: last.mat[0], n: last.n, a: last.a, lt: last.lt, mfi: last.mfi, p: last.p, need: last.need });
+    savePins();
+    renderPins();
+  });
+  el.compWrap.addEventListener("click", function (e) {
+    var b = e.target.closest ? e.target.closest("[data-del]") : null;
+    if (!b) return;
+    pins.splice(+b.getAttribute("data-del"), 1);
+    savePins();
+    renderPins();
+  });
+
   el.mat.addEventListener("change", function () {
-    manualPress = false;
-    autoPress();
+    el.mfi.value = MATERIALS[+el.mat.value][2];
+    el.press.value = "";
     update();
   });
-  ["flow", "thick"].forEach(function (id) {
-    el[id].addEventListener("input", function () {
-      manualPress = false;
-      autoPress();
-      update();
-    });
-  });
-  el.press.addEventListener("input", function () {
-    manualPress = true;
-    update();
-  });
-  ["cav", "area", "runner", "margin"].forEach(function (id) {
+  el.tipoSimples.addEventListener("click", function () { stack = false; update(); });
+  el.tipoStack.addEventListener("click", function () { stack = true; update(); });
+  ["cav", "area", "mfi", "flow", "thick", "press", "runner", "margin"].forEach(function (id) {
     el[id].addEventListener("input", update);
   });
   el.machines.addEventListener("input", function () {
@@ -385,6 +530,5 @@ details .field:first-of-type { margin-top: 12px; }
   update();
 })();
 </script>
-
 </body>
 </html>
