@@ -107,6 +107,8 @@ details .field:first-of-type { margin-top: 12px; }
 }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .78rem; color: var(--muted); margin-top: 12px; }
 .formula { font-family: var(--f-mono); font-size: .85rem; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 10px 12px; overflow-x: auto; white-space: nowrap; }
+.alert { border-radius: 4px; padding: 10px 12px; font-size: .85rem; font-weight: 500; background: var(--warn-soft); color: var(--warn); border: 1px solid var(--warn); }
+.alert.bad { background: var(--bad-soft); color: var(--bad); border-color: var(--bad); }
 .notes { margin: 12px 0 0; padding-left: 1.1rem; color: var(--muted); font-size: .85rem; display: flex; flex-direction: column; gap: 4px; }
 </style>
 
@@ -134,6 +136,16 @@ details .field:first-of-type { margin-top: 12px; }
         <div class="field">
           <label for="mat">Material</label>
           <div class="ctl"><select id="mat"></select></div>
+        </div>
+        <div class="field">
+          <label for="flow">Comprimento de fluxo</label>
+          <div class="ctl"><input id="flow" type="number" inputmode="decimal" min="0" step="1" value="0"><span class="unit">mm</span></div>
+          <span class="hint">Do ponto de injeção até o ponto mais distante da peça. Deixe 0 para ignorar.</span>
+        </div>
+        <div class="field">
+          <label for="thick">Espessura nominal da parede</label>
+          <div class="ctl"><input id="thick" type="number" inputmode="decimal" min="0" step="0.1" value="0"><span class="unit">mm</span></div>
+          <span class="hint" id="ltHint">Informe comprimento e espessura para corrigir a pressão pela razão L/t.</span>
         </div>
         <details>
           <summary>Ajustes</summary>
@@ -172,6 +184,7 @@ details .field:first-of-type { margin-top: 12px; }
           <div class="big"><span class="num" id="outT">0</span><span class="alt" id="outKn"></span></div>
         </div>
         <div class="facts" id="facts"></div>
+        <div id="ltAlert"></div>
         <div class="verdict" id="verdict"></div>
       </section>
 
@@ -188,10 +201,12 @@ details .field:first-of-type { margin-top: 12px; }
 
       <section class="panel" aria-labelledby="h-calc">
         <h2 id="h-calc">Como é calculado</h2>
-        <div class="formula">F = (cavidades × A_cav + A_canal) × P × (1 + folga)</div>
+        <div class="formula">F = (cavidades × A_cav + A_canal) × P × (1 + folga)<br>P = P_material × fator(L/t)</div>
         <ul class="notes">
           <li>A em cm², P em bar convertida para kgf/cm² (1 bar = 1,0197 kgf/cm²), F em toneladas-força (T).</li>
-          <li>As pressões por material são valores típicos de projeto. Peças de parede fina ou fluxo longo pedem pressão maior: ajuste o campo em Ajustes.</li>
+          <li>As pressões por material são valores típicos de projeto, para L/t em torno de 100. O fator de correção por L/t (comprimento de fluxo ÷ espessura) é uma estimativa empírica a calibrar com moldes reais: L/t 50 = 0,85, 100 = 1,00, 150 = 1,15, 200 = 1,35, 250 = 1,60, 300 ou mais = 1,90, com interpolação entre os pontos.</li>
+          <li>Com mais de um ponto de injeção, use o maior caminho de fluxo de um ponto até o fim da região que ele alimenta.</li>
+          <li>Se você editar a pressão em Ajustes, o valor manual vale até trocar o material, o comprimento ou a espessura.</li>
           <li>O cálculo considera só a força de fechamento. Confira também distância entre colunas, curso de abertura, altura do molde e capacidade de injeção.</li>
         </ul>
       </section>
@@ -214,8 +229,34 @@ details .field:first-of-type { margin-top: 12px; }
   var el = {
     cav: $("cav"), area: $("area"), mat: $("mat"), press: $("press"), runner: $("runner"),
     margin: $("margin"), machines: $("machines"), outT: $("outT"), outKn: $("outKn"),
-    facts: $("facts"), verdict: $("verdict"), rows: $("rows"), pressHint: $("pressHint")
+    facts: $("facts"), verdict: $("verdict"), rows: $("rows"), pressHint: $("pressHint"),
+    flow: $("flow"), thick: $("thick"), ltHint: $("ltHint"), ltAlert: $("ltAlert")
   };
+
+  // Fator de correção da pressão por razão L/t (estimativa empírica, a calibrar).
+  var LT_CURVE = [[50, 0.85], [100, 1.0], [150, 1.15], [200, 1.35], [250, 1.6], [300, 1.9]];
+  function ltFactor(lt) {
+    if (!(lt > 0)) return 1;
+    var c = LT_CURVE;
+    if (lt <= c[0][0]) return c[0][1];
+    if (lt >= c[c.length - 1][0]) return c[c.length - 1][1];
+    for (var i = 1; i < c.length; i++) {
+      if (lt <= c[i][0]) {
+        var t = (lt - c[i - 1][0]) / (c[i][0] - c[i - 1][0]);
+        return c[i - 1][1] + t * (c[i][1] - c[i - 1][1]);
+      }
+    }
+    return 1;
+  }
+  var manualPress = false;
+  function autoPress() {
+    var lt = ltValue();
+    el.press.value = Math.round(MATERIALS[+el.mat.value][1] * ltFactor(lt));
+  }
+  function ltValue() {
+    var f = num(el.flow), t = num(el.thick);
+    return f > 0 && t > 0 ? f / t : 0;
+  }
 
   function fmt(v, d) {
     return v.toLocaleString("pt-BR", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -268,10 +309,23 @@ details .field:first-of-type { margin-top: 12px; }
     el.outT.textContent = fmt(need, 1) + " T";
     el.outKn.textContent = fmt(need * TF_TO_KN, 0) + " kN";
 
-    var adj = p !== mat[1] ? " (ajustada)" : "";
-    el.pressHint.textContent = "Típica para " + mat[0] + ": " + mat[1] + " bar" + (adj ? ". Valor atual ajustado." : ".");
+    var lt = ltValue(), fac = ltFactor(lt);
+    el.pressHint.textContent = "Típica para " + mat[0] + ": " + mat[1] + " bar" +
+      (lt > 0 ? ", × " + fmt(fac, 2) + " por L/t = " + fmt(lt, 0) + " → " + fmt(mat[1] * fac, 0) + " bar" : "") +
+      (manualPress ? ". Valor atual ajustado manualmente." : ".");
+    el.ltHint.textContent = lt > 0
+      ? "L/t = " + fmt(lt, 0) + " (fator de pressão × " + fmt(fac, 2) + ")."
+      : "Informe comprimento e espessura para corrigir a pressão pela razão L/t.";
+    var alertHtml = "";
+    if (lt > 250) {
+      alertHtml = '<div class="alert bad">L/t = ' + fmt(lt, 0) + ': enchimento muito difícil. Considere mais pontos de injeção, parede mais espessa ou material de maior fluidez.</div>';
+    } else if (lt > 150) {
+      alertHtml = '<div class="alert">L/t = ' + fmt(lt, 0) + ': fluxo longo. Verifique se o enchimento fecha e avalie mais pontos de injeção.</div>';
+    }
+    el.ltAlert.innerHTML = alertHtml;
     el.facts.innerHTML =
       "<span>Área total <b>" + fmt(areaTotal, 1) + " cm²</b></span>" +
+      (lt > 0 ? "<span>L/t <b>" + fmt(lt, 0) + "</b></span>" : "") +
       "<span>Pressão <b>" + fmt(p, 0) + " bar</b></span>" +
       "<span>Sem folga <b>" + fmt(base, 1) + " T</b></span>" +
       "<span>Folga <b>" + fmt(margin * 100, 0) + "%</b></span>";
@@ -305,10 +359,22 @@ details .field:first-of-type { margin-top: 12px; }
   }
 
   el.mat.addEventListener("change", function () {
-    el.press.value = MATERIALS[+el.mat.value][1];
+    manualPress = false;
+    autoPress();
     update();
   });
-  ["cav", "area", "press", "runner", "margin"].forEach(function (id) {
+  ["flow", "thick"].forEach(function (id) {
+    el[id].addEventListener("input", function () {
+      manualPress = false;
+      autoPress();
+      update();
+    });
+  });
+  el.press.addEventListener("input", function () {
+    manualPress = true;
+    update();
+  });
+  ["cav", "area", "runner", "margin"].forEach(function (id) {
     el[id].addEventListener("input", update);
   });
   el.machines.addEventListener("input", function () {
