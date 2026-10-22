@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>html,body{margin:0}</style>
+<title>Tonelagem de Molde</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: coluna de entradas à esquerda, resultado e lista de máquinas à direita; empilha no celular. */
+:root {
+  --bg: #eceff1;
+  --surface: #fafbfb;
+  --fg: #1a2328;
+  --muted: #586870;
+  --line: #d2d9dd;
+  --accent: #0e6a6a;
+  --accent-soft: #dcebea;
+  --ok: #2c7a4b;
+  --ok-soft: #dcefe3;
+  --warn: #a35f00;
+  --warn-soft: #f6e8cf;
+  --bad: #b03a2e;
+  --bad-soft: #f5dcd8;
+  --idle: #7a8890;
+  --idle-soft: #e3e8ea;
+  --f-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11181b; --surface: #182125; --fg: #e5ebed; --muted: #92a2aa; --line: #2a373c;
+    --accent: #52c2c0; --accent-soft: #1c3434;
+    --ok: #5fc58a; --ok-soft: #1d3426; --warn: #e3a64a; --warn-soft: #382c16;
+    --bad: #ee8076; --bad-soft: #3b1f1c; --idle: #8a9aa2; --idle-soft: #232e33;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11181b; --surface: #182125; --fg: #e5ebed; --muted: #92a2aa; --line: #2a373c;
+  --accent: #52c2c0; --accent-soft: #1c3434;
+  --ok: #5fc58a; --ok-soft: #1d3426; --warn: #e3a64a; --warn-soft: #382c16;
+  --bad: #ee8076; --bad-soft: #3b1f1c; --idle: #8a9aa2; --idle-soft: #232e33;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.5;
+  padding-block: 28px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 1040px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+header h1 { font-family: var(--f-display); font-weight: 700; font-size: 2.2rem; line-height: 1.05; margin: 0; letter-spacing: .01em; text-wrap: balance; }
+header p { margin: 6px 0 0; color: var(--muted); max-width: 60ch; }
+.layout { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 780px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+.col { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 18px; min-width: 0; }
+.panel h2 { font-family: var(--f-display); font-weight: 600; font-size: 1.05rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 14px; }
+.field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; min-width: 0; }
+.field:last-child { margin-bottom: 0; }
+label, .lbl { font-size: .85rem; font-weight: 500; }
+.hint { font-size: .78rem; color: var(--muted); }
+.ctl { display: flex; align-items: stretch; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); min-width: 0; }
+.ctl:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
+.ctl input, .ctl select { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--fg); font: 500 1rem var(--f-mono); padding: 9px 10px; outline: none; }
+.ctl select { font-family: var(--f-body); }
+.ctl .unit { display: flex; align-items: center; padding: 0 10px; color: var(--muted); font: .82rem var(--f-mono); border-left: 1px solid var(--line); }
+details { border-top: 1px solid var(--line); margin-top: 16px; padding-top: 12px; }
+summary { cursor: pointer; font-size: .85rem; font-weight: 500; color: var(--accent); }
+summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+details .field:first-of-type { margin-top: 12px; }
+.result { display: flex; flex-direction: column; gap: 14px; }
+.result .eyebrow { font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+.big { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.big .num { font-family: var(--f-display); font-weight: 700; font-size: 4.2rem; line-height: .95; color: var(--accent); font-variant-numeric: tabular-nums; }
+.big .alt { font-family: var(--f-mono); color: var(--muted); font-size: .95rem; }
+.facts { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .82rem; color: var(--muted); }
+.facts b { font-family: var(--f-mono); font-weight: 500; color: var(--fg); }
+.verdict { border-top: 1px solid var(--line); padding-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+.verdict .q { font-weight: 600; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font-family: var(--f-display); font-weight: 700; font-size: 1.35rem; line-height: 1; padding: 7px 12px 6px; border-radius: 4px; border: 1px solid transparent; font-variant-numeric: tabular-nums; }
+.chip.ok { background: var(--ok-soft); color: var(--ok); border-color: var(--ok); }
+.chip.warn { background: var(--warn-soft); color: var(--warn); border-color: var(--warn); }
+.chip.idle { background: var(--idle-soft); color: var(--idle); border-color: var(--line); }
+.none { background: var(--bad-soft); color: var(--bad); border: 1px solid var(--bad); border-radius: 4px; padding: 10px 12px; font-weight: 500; }
+.rows { display: flex; flex-direction: column; }
+.row { display: grid; grid-template-columns: 4.2rem minmax(0, 1fr) 11.5rem; align-items: center; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); }
+.row:first-child { border-top: 0; }
+.row .m { font-family: var(--f-display); font-weight: 700; font-size: 1.4rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.track { position: relative; height: 10px; background: var(--idle-soft); border-radius: 2px; overflow: hidden; }
+.track i { position: absolute; inset: 0 auto 0 0; display: block; border-radius: 2px; }
+.track .mark { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--fg); opacity: .35; }
+.row .st { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: .82rem; }
+.row .st span:first-child { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.tag { font-size: .72rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+.s-ok { color: var(--ok); } .s-warn { color: var(--warn); } .s-bad { color: var(--bad); } .s-idle { color: var(--idle); }
+.f-ok { background: var(--ok); } .f-warn { background: var(--warn); } .f-bad { background: var(--bad); } .f-idle { background: var(--idle); }
+@media (max-width: 520px) {
+  .row { grid-template-columns: 3.6rem minmax(0, 1fr); row-gap: 4px; }
+  .row .st { grid-column: 1 / -1; }
+  .big .num { font-size: 3.4rem; }
+}
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .78rem; color: var(--muted); margin-top: 12px; }
+.formula { font-family: var(--f-mono); font-size: .85rem; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 10px 12px; overflow-x: auto; white-space: nowrap; }
+.alert { border-radius: 4px; padding: 10px 12px; font-size: .85rem; font-weight: 500; background: var(--warn-soft); color: var(--warn); border: 1px solid var(--warn); }
+.alert.bad { background: var(--bad-soft); color: var(--bad); border-color: var(--bad); }
+.notes { margin: 12px 0 0; padding-left: 1.1rem; color: var(--muted); font-size: .85rem; display: flex; flex-direction: column; gap: 4px; }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Tonelagem de Molde</h1>
+    <p>Informe cavidades, área projetada e material. A página calcula a força de fechamento e mostra em quais injetoras o molde pode ser instalado.</p>
+  </header>
+
+  <div class="layout">
+    <div class="col">
+      <section class="panel" aria-labelledby="h-molde">
+        <h2 id="h-molde">Molde</h2>
+        <div class="field">
+          <label for="cav">Número de cavidades</label>
+          <div class="ctl"><input id="cav" type="number" inputmode="numeric" min="1" max="256" step="1" value="4"><span class="unit">cav.</span></div>
+        </div>
+        <div class="field">
+          <label for="area">Área projetada por cavidade</label>
+          <div class="ctl"><input id="area" type="number" inputmode="decimal" min="0" step="0.1" value="85"><span class="unit">cm²</span></div>
+          <span class="hint">Área da peça vista na direção de abertura do molde.</span>
+        </div>
+        <div class="field">
+          <label for="mat">Material</label>
+          <div class="ctl"><select id="mat"></select></div>
+        </div>
+        <div class="field">
+          <label for="flow">Comprimento de fluxo</label>
+          <div class="ctl"><input id="flow" type="number" inputmode="decimal" min="0" step="1" value="0"><span class="unit">mm</span></div>
+          <span class="hint">Do ponto de injeção até o ponto mais distante da peça. Deixe 0 para ignorar.</span>
+        </div>
+        <div class="field">
+          <label for="thick">Espessura nominal da parede</label>
+          <div class="ctl"><input id="thick" type="number" inputmode="decimal" min="0" step="0.1" value="0"><span class="unit">mm</span></div>
+          <span class="hint" id="ltHint">Informe comprimento e espessura para corrigir a pressão pela razão L/t.</span>
+        </div>
+        <details>
+          <summary>Ajustes</summary>
+          <div class="field">
+            <label for="press">Pressão de cavitação</label>
+            <div class="ctl"><input id="press" type="number" inputmode="decimal" min="1" step="10" value="450"><span class="unit">bar</span></div>
+            <span class="hint" id="pressHint"></span>
+          </div>
+          <div class="field">
+            <label for="runner">Área projetada do canal (opcional)</label>
+            <div class="ctl"><input id="runner" type="number" inputmode="decimal" min="0" step="0.1" value="0"><span class="unit">cm²</span></div>
+            <span class="hint">Preencha para canal frio. Deixe 0 para câmara quente.</span>
+          </div>
+          <div class="field">
+            <label for="margin">Folga de segurança</label>
+            <div class="ctl"><input id="margin" type="number" inputmode="decimal" min="0" max="100" step="1" value="10"><span class="unit">%</span></div>
+          </div>
+        </details>
+      </section>
+
+      <section class="panel" aria-labelledby="h-maq">
+        <h2 id="h-maq">Máquinas disponíveis</h2>
+        <div class="field">
+          <label for="machines">Força de fechamento (T)</label>
+          <div class="ctl"><input id="machines" type="text" inputmode="numeric" value="80, 120, 150, 180, 220, 350, 450, 550"></div>
+          <span class="hint">Separe por vírgula. Lista de exemplo: troque pelas injetoras da sua fábrica. A lista fica salva neste navegador.</span>
+        </div>
+      </section>
+    </div>
+
+    <div class="col">
+      <section class="panel result" aria-live="polite" aria-labelledby="h-res">
+        <h2 id="h-res" style="margin:0">Resultado</h2>
+        <div>
+          <div class="eyebrow">Força de fechamento necessária</div>
+          <div class="big"><span class="num" id="outT">0</span><span class="alt" id="outKn"></span></div>
+        </div>
+        <div class="facts" id="facts"></div>
+        <div id="ltAlert"></div>
+        <div class="verdict" id="verdict"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="h-det">
+        <h2 id="h-det">Ocupação por máquina</h2>
+        <div class="rows" id="rows"></div>
+        <div class="legend">
+          <span><b class="s-ok">Indicada</b> 50% a 90%</span>
+          <span><b class="s-warn">No limite</b> 90% a 100%</span>
+          <span><b class="s-idle">Sobredimensionada</b> abaixo de 50%</span>
+          <span><b class="s-bad">Insuficiente</b> acima de 100%</span>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="h-calc">
+        <h2 id="h-calc">Como é calculado</h2>
+        <div class="formula">F = (cavidades × A_cav + A_canal) × P × (1 + folga)<br>P = P_material × fator(L/t)</div>
+        <ul class="notes">
+          <li>A em cm², P em bar convertida para kgf/cm² (1 bar = 1,0197 kgf/cm²), F em toneladas-força (T).</li>
+          <li>As pressões por material são valores típicos de projeto, para L/t em torno de 100. O fator de correção por L/t (comprimento de fluxo ÷ espessura) é uma estimativa empírica a calibrar com moldes reais: L/t 50 = 0,85, 100 = 1,00, 150 = 1,15, 200 = 1,35, 250 = 1,60, 300 ou mais = 1,90, com interpolação entre os pontos.</li>
+          <li>Com mais de um ponto de injeção, use o maior caminho de fluxo de um ponto até o fim da região que ele alimenta.</li>
+          <li>Se você editar a pressão em Ajustes, o valor manual vale até trocar o material, o comprimento ou a espessura.</li>
+          <li>O cálculo considera só a força de fechamento. Confira também distância entre colunas, curso de abertura, altura do molde e capacidade de injeção.</li>
+        </ul>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var MATERIALS = [
+    ["PE-BD (LDPE)", 250], ["PE-AD (HDPE)", 300], ["PP", 350], ["PS cristal", 350],
+    ["PS alto impacto", 350], ["TPU / TPE", 400], ["SAN", 400], ["ABS", 450], ["PET", 450],
+    ["PVC rígido", 450], ["PBT", 450], ["PA 6 / PA 66", 500], ["POM", 500], ["PMMA", 550],
+    ["PC/ABS", 550], ["PC", 600], ["PA com fibra de vidro", 600]
+  ];
+  var DEFAULT_MACHINES = "80, 120, 150, 180, 220, 350, 450, 550";
+  var BAR_TO_KGF = 1.01972, TF_TO_KN = 9.80665;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var el = {
+    cav: $("cav"), area: $("area"), mat: $("mat"), press: $("press"), runner: $("runner"),
+    margin: $("margin"), machines: $("machines"), outT: $("outT"), outKn: $("outKn"),
+    facts: $("facts"), verdict: $("verdict"), rows: $("rows"), pressHint: $("pressHint"),
+    flow: $("flow"), thick: $("thick"), ltHint: $("ltHint"), ltAlert: $("ltAlert")
+  };
+
+  // Fator de correção da pressão por razão L/t (estimativa empírica, a calibrar).
+  var LT_CURVE = [[50, 0.85], [100, 1.0], [150, 1.15], [200, 1.35], [250, 1.6], [300, 1.9]];
+  function ltFactor(lt) {
+    if (!(lt > 0)) return 1;
+    var c = LT_CURVE;
+    if (lt <= c[0][0]) return c[0][1];
+    if (lt >= c[c.length - 1][0]) return c[c.length - 1][1];
+    for (var i = 1; i < c.length; i++) {
+      if (lt <= c[i][0]) {
+        var t = (lt - c[i - 1][0]) / (c[i][0] - c[i - 1][0]);
+        return c[i - 1][1] + t * (c[i][1] - c[i - 1][1]);
+      }
+    }
+    return 1;
+  }
+  var manualPress = false;
+  function autoPress() {
+    var lt = ltValue();
+    el.press.value = Math.round(MATERIALS[+el.mat.value][1] * ltFactor(lt));
+  }
+  function ltValue() {
+    var f = num(el.flow), t = num(el.thick);
+    return f > 0 && t > 0 ? f / t : 0;
+  }
+
+  function fmt(v, d) {
+    return v.toLocaleString("pt-BR", { minimumFractionDigits: d, maximumFractionDigits: d });
+  }
+  function num(input) {
+    var v = parseFloat(String(input.value).replace(",", "."));
+    return isFinite(v) ? v : 0;
+  }
+
+  MATERIALS.forEach(function (m, i) {
+    var o = document.createElement("option");
+    o.value = i; o.textContent = m[0] + " (" + m[1] + " bar)";
+    el.mat.appendChild(o);
+  });
+  el.mat.value = "7"; // ABS
+
+  try {
+    var saved = localStorage.getItem("tonelagem.machines");
+    if (saved) el.machines.value = saved;
+  } catch (e) {}
+
+  function parseMachines() {
+    var seen = {}, list = [];
+    String(el.machines.value).split(/[\s,;]+/).forEach(function (s) {
+      var v = parseFloat(s.replace(",", "."));
+      if (isFinite(v) && v > 0 && !seen[v]) { seen[v] = 1; list.push(v); }
+    });
+    return list.sort(function (a, b) { return a - b; });
+  }
+
+  function status(util) {
+    if (util > 1) return { k: "bad", t: "Insuficiente" };
+    if (util > 0.9) return { k: "warn", t: "No limite" };
+    if (util >= 0.5) return { k: "ok", t: "Indicada" };
+    return { k: "idle", t: "Sobredimensionada" };
+  }
+
+  function update() {
+    var n = Math.max(0, Math.round(num(el.cav)));
+    var a = Math.max(0, num(el.area));
+    var runner = Math.max(0, num(el.runner));
+    var p = Math.max(0, num(el.press));
+    var margin = Math.max(0, num(el.margin)) / 100;
+    var mat = MATERIALS[+el.mat.value];
+
+    var areaTotal = n * a + runner;
+    var base = areaTotal * p * BAR_TO_KGF / 1000;
+    var need = base * (1 + margin);
+
+    el.outT.textContent = fmt(need, 1) + " T";
+    el.outKn.textContent = fmt(need * TF_TO_KN, 0) + " kN";
+
+    var lt = ltValue(), fac = ltFactor(lt);
+    el.pressHint.textContent = "Típica para " + mat[0] + ": " + mat[1] + " bar" +
+      (lt > 0 ? ", × " + fmt(fac, 2) + " por L/t = " + fmt(lt, 0) + " → " + fmt(mat[1] * fac, 0) + " bar" : "") +
+      (manualPress ? ". Valor atual ajustado manualmente." : ".");
+    el.ltHint.textContent = lt > 0
+      ? "L/t = " + fmt(lt, 0) + " (fator de pressão × " + fmt(fac, 2) + ")."
+      : "Informe comprimento e espessura para corrigir a pressão pela razão L/t.";
+    var alertHtml = "";
+    if (lt > 250) {
+      alertHtml = '<div class="alert bad">L/t = ' + fmt(lt, 0) + ': enchimento muito difícil. Considere mais pontos de injeção, parede mais espessa ou material de maior fluidez.</div>';
+    } else if (lt > 150) {
+      alertHtml = '<div class="alert">L/t = ' + fmt(lt, 0) + ': fluxo longo. Verifique se o enchimento fecha e avalie mais pontos de injeção.</div>';
+    }
+    el.ltAlert.innerHTML = alertHtml;
+    el.facts.innerHTML =
+      "<span>Área total <b>" + fmt(areaTotal, 1) + " cm²</b></span>" +
+      (lt > 0 ? "<span>L/t <b>" + fmt(lt, 0) + "</b></span>" : "") +
+      "<span>Pressão <b>" + fmt(p, 0) + " bar</b></span>" +
+      "<span>Sem folga <b>" + fmt(base, 1) + " T</b></span>" +
+      "<span>Folga <b>" + fmt(margin * 100, 0) + "%</b></span>";
+
+    var machines = parseMachines();
+    var fits = machines.filter(function (m) { return need <= m; });
+
+    var html = "";
+    if (need <= 0) {
+      html = '<div class="q">Informe cavidades e área projetada para calcular.</div>';
+    } else if (!machines.length) {
+      html = '<div class="q">Adicione ao menos uma máquina à lista.</div>';
+    } else if (!fits.length) {
+      html = '<div class="none">Nenhuma máquina da lista comporta este molde. É preciso uma injetora de pelo menos ' + fmt(need, 0) + ' T.</div>';
+    } else {
+      html = '<div class="q">Este molde pode ser colocado em:</div><div class="chips">' +
+        fits.map(function (m) {
+          return '<span class="chip ' + status(need / m).k + '">' + fmt(m, m % 1 ? 1 : 0) + " T</span>";
+        }).join("") + "</div>";
+    }
+    el.verdict.innerHTML = html;
+
+    el.rows.innerHTML = need > 0 ? machines.map(function (m) {
+      var u = need / m, s = status(u);
+      return '<div class="row"><span class="m">' + fmt(m, m % 1 ? 1 : 0) + ' T</span>' +
+        '<div class="track" role="img" aria-label="Ocupação de ' + fmt(u * 100, 0) + '%">' +
+        '<i class="f-' + s.k + '" style="width:' + Math.min(u, 1) * 100 + '%"></i>' +
+        '<span class="mark" style="left:90%"></span></div>' +
+        '<div class="st"><span>' + fmt(u * 100, 0) + '%</span><span class="tag s-' + s.k + '">' + s.t + '</span></div></div>';
+    }).join("") : "";
+  }
+
+  el.mat.addEventListener("change", function () {
+    manualPress = false;
+    autoPress();
+    update();
+  });
+  ["flow", "thick"].forEach(function (id) {
+    el[id].addEventListener("input", function () {
+      manualPress = false;
+      autoPress();
+      update();
+    });
+  });
+  el.press.addEventListener("input", function () {
+    manualPress = true;
+    update();
+  });
+  ["cav", "area", "runner", "margin"].forEach(function (id) {
+    el[id].addEventListener("input", update);
+  });
+  el.machines.addEventListener("input", function () {
+    try { localStorage.setItem("tonelagem.machines", el.machines.value); } catch (e) {}
+    update();
+  });
+
+  update();
+})();
+</script>
+
+</body>
+</html>
